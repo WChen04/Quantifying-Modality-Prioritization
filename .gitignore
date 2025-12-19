@@ -1,0 +1,5 @@
+__pycache__
+config.yaml
+results/artifacts/*
+.env
+.DS_Store

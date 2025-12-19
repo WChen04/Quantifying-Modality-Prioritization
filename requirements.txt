@@ -1,0 +1,6 @@
+google-genai
+pillow
+gTTS
+pandas
+pyyaml
+tqdm
