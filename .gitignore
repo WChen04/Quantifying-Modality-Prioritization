@@ -1,5 +1,42 @@
-__pycache__
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environments
+venv/
+venv_hf/
+env/
+ENV/
+.venv/
+
+# Configuration
 config.yaml
-results/artifacts/*
 .env
+
+# Results (artifacts can be regenerated)
+results/artifacts/*
+results/figures/*
+
+# OS
 .DS_Store
+Thumbs.db
+
+# LaTeX temporary files
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+
+# Old/unused documentation (now deleted)
+*.md
+!README.md
+!LICENSE
+
+# Old paper versions (now deleted)
+*.ltx
+project_neurips.tex
+project_neurips_standalone.tex
