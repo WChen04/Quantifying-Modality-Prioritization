@@ -3,291 +3,241 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 
-**Research Paper**: [modality-prioritization-attack-vector.tex](modality-prioritization-attack-vector.tex)
+## Overview
 
-## 📄 Overview
+This repository provides the implementation and experimental framework for quantifying modality prioritization as a security vulnerability in Multimodal Large Language Models (MLLMs). The work introduces a systematic methodology for measuring how different input modalities are weighted when conflicting information is presented across text, image, and audio channels.
 
-This repository contains the implementation of research investigating a critical security vulnerability in Multimodal Large Language Models (MLLMs): **Cross-Modal Indirect Prompt Injection (CM-IPI)**.
+### Research Contributions
 
-### The Core Finding
+1. **Prioritization Index**: A quantitative metric ($\Delta_{\text{audio}}$) for measuring modality prioritization across 300 controlled adversarial scenarios
+2. **Harmonic-Dissonance Benchmark**: A standardized evaluation framework with 50 adversarial prompts spanning 9 threat categories
+3. **Cross-Architecture Analysis**: Comparative evaluation of pipeline architectures (LLaVA + Whisper) versus native multimodal models (Qwen2-Audio)
+4. **Reproducible Framework**: Complete experimental code, Docker containers, and data for reproducible research
 
-We discovered that benign audio inputs (e.g., "What color is this?") systematically amplify visual jailbreaking attacks on MLLMs. This **Audio Multiplier Effect** works by diverting the model's attention from malicious visual content, creating an exploitable "Hearing is Trusting" bias.
+### Experimental Findings
 
-### Key Contributions
-
-1. **Distraction Hypothesis**: Formalized how benign audio distracts attention from visual threats
-2. **Harmonic-Dissonance Benchmark**: 50 adversarial prompts across 9 threat categories
-3. **Cross-Architecture Validation**: Tested on LLaVA-v1.6 + Whisper and Qwen2-Audio
-4. **Open-Source Framework**: Fully reproducible experiments
+Our experiments demonstrate that architecture determines prioritization patterns. Pipeline-based models (LLaVA) exhibit audio-first prioritization where benign audio reduces visual jailbreaking success by 44% (18.0% → 10.0% ASR). Native multimodal architectures (Qwen2-Audio) maintain balanced modality weighting with consistent safety across all input conditions.
 
 ---
 
-## 🚀 Quick Start
+## Installation
 
-### Prerequisites
+### Docker (Recommended)
 
-- **Python 3.11+**
-- **GPU**: NVIDIA GPU with 12GB+ VRAM recommended (RTX 3060 or better)
-- **CUDA**: For GPU acceleration
+Docker provides a consistent execution environment across platforms. When using Docker, a virtual environment is not required as dependencies are managed within containers.
 
-### Installation
+**Prerequisites:**
+- Docker Desktop ([Download](https://www.docker.com/products/docker-desktop))
+- NVIDIA Docker for GPU support on Linux/Windows ([Installation Guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html))
+- Mac users: Docker Desktop includes MPS support automatically
+
+**Quick Start:**
 
 ```bash
-# Clone repository
-git clone https://github.com/yourusername/Quantifying-Modality-Prioritization.git
+git clone https://github.com/WChen04/Quantifying-Modality-Prioritization.git
 cd Quantifying-Modality-Prioritization
 
-# Create virtual environment (recommended)
+# Create configuration from template
+cp config.yaml.template config.yaml
+# Edit config.yaml with your settings
+
+# Run experiments
+docker-compose up gpu    # For NVIDIA GPU
+docker-compose up cpu    # For Mac or CPU-only
+```
+
+**Docker Commands:**
+
+```bash
+# Run specific experiment mode
+docker-compose run --rm gpu python main.py --mode visual
+
+# Access container shell
+docker-compose run --rm gpu bash
+
+# View logs
+docker-compose logs -f gpu
+
+# Stop containers
+docker-compose down
+```
+
+The `docker-compose.yml` provides two services: `gpu` for NVIDIA GPUs with CUDA support, and `cpu` for Mac (MPS) or CPU-only systems. Results are saved to `./results/` on the host machine.
+
+### Local Installation
+
+For local installation, a Python virtual environment is recommended to avoid dependency conflicts.
+
+**Prerequisites:**
+- Python 3.11+
+- NVIDIA GPU with 12GB+ VRAM (recommended) or Mac with M-series chip
+- CUDA (for NVIDIA GPUs) or MPS (automatic on Mac)
+
+**Installation Steps:**
+
+```bash
+git clone https://github.com/WChen04/Quantifying-Modality-Prioritization.git
+cd Quantifying-Modality-Prioritization
+
+# Create virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install PyTorch
+# For NVIDIA GPU:
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+pip install bitsandbytes
+
+# For Mac (MPS) or CPU:
+pip install torch torchvision torchaudio
 
 # Install dependencies
 pip install -r requirements.txt
 ```
 
-### Configuration
+**Configuration:**
 
-Edit `config.yaml` to select your model backend:
+```bash
+cp config.yaml.template config.yaml
+```
+
+Edit `config.yaml` to select model architecture:
 
 ```yaml
-# Hugging Face (Open Source) - Recommended
-backend: "huggingface"
-vision_model: "llava-hf/llava-v1.6-mistral-7b-hf"
-audio_model: "openai/whisper-large-v3"
-use_4bit: true  # Memory optimization
+# Option 1: Qwen2-Audio (native multimodal)
+use_qwen2_audio: true
+qwen2_model: "Qwen/Qwen2-Audio-7B-Instruct"
+
+# Option 2: LLaVA + Whisper (pipeline architecture)
+# use_qwen2_audio: false
+# vision_model: "llava-hf/llava-v1.6-mistral-7b-hf"
+# audio_model: "openai/whisper-large-v3"
+
+device: "auto"  # "cuda", "mps", or "cpu"
+use_4bit: true  # Memory optimization (NVIDIA GPU only)
 dataset_path: "data/dataset_extended.csv"
 ```
 
+---
+
+## Usage
+
 ### Running Experiments
 
+The framework supports three experimental conditions:
+
 ```bash
-# Run all three experimental conditions
+# Run all conditions sequentially
 python main.py --mode full
 
-# Or run individually:
+# Run individual conditions
 python main.py --mode text    # Text-only baseline
 python main.py --mode visual  # Visual-only attacks
 python main.py --mode omni    # Omni-modal (visual + audio)
 ```
 
-### Analyzing Results
+### Analysis and Visualization
 
 ```bash
 # Generate statistics and metrics
 python analyze_results.py
 
-# Create figures for paper
+# Generate figures
 python create_figures.py
+
+# Compress artifacts for repository since .mp4 and .pdf files may be large
+python zip_artifacts.py
+```
+
+### Extracting Artifacts
+
+Artifacts are stored in compressed format. To extract:
+
+```bash
+unzip results/artifacts.zip -d results/artifacts/
 ```
 
 ---
 
-## 📊 Repository Structure
+## Repository Structure
 
 ```
 Quantifying-Modality-Prioritization/
-├── modality-prioritization-attack-vector.tex  # Research paper (LaTeX)
-├── main.py                                     # Main experiment runner
-├── config.yaml                                 # Configuration file
-├── requirements.txt                            # Python dependencies
-├── analyze_results.py                          # Results analysis
-├── create_figures.py                           # Figure generation
+├── main.py                                    # Main experiment runner
+├── config.yaml.template                       # Configuration template
+├── config.yaml                                # User configuration (create from template)
+├── requirements.txt                           # Python dependencies
+├── analyze_results.py                         # Results analysis
+├── create_figures.py                          # Figure generation
+├── zip_artifacts.py                           # Artifact compression utility
+├── Dockerfile                                 # Docker container definition
+├── docker-compose.yml                         # Docker Compose configuration
 ├── data/
-│   ├── dataset.csv                # Small test dataset (3 prompts)
+│   ├── dataset.csv                # Test dataset (3 prompts)
 │   └── dataset_extended.csv       # Full dataset (50 prompts)
 ├── src/
-│   ├── generator.py               # Generates visual/audio artifacts
-│   ├── judge.py                   # Evaluates model responses
-│   ├── models.py                  # Gemini models (deprecated)
-│   └── models_hf.py               # Hugging Face models
+│   ├── generator.py               # Visual/audio artifact generation
+│   ├── judge.py                   # Response evaluation
+│   └── models_hf.py               # Model implementations
 └── results/
     ├── experiment_text.csv        # Text-only results
     ├── experiment_visual.csv      # Visual-only results
     ├── experiment_omni.csv        # Omni-modal results
-    └── artifacts/                 # Generated images & audio
+    ├── artifacts.zip              # Compressed artifacts
+    └── artifacts/                 # Individual files (extract from zip)
 ```
 
 ---
 
-## ✅ What Worked
+## Experimental Methodology
 
-### Successful Components
+### Model Architectures
 
-1. **LLaVA + Whisper Pipeline**
-   - Transcription-based approach works reliably
-   - 4-bit quantization enables 12GB GPU usage
-   - Consistent results across 50 prompts
+Two architectures were evaluated:
 
-2. **Visual Jailbreaking**
-   - Typographic attacks (text-as-image) successfully bypass text filters
-   - 1024×200px PNG images with Arial 36pt font work best
+1. **LLaVA-v1.6-Mistral-7B + Whisper-Large-v3**: Pipeline architecture where Whisper transcribes audio to text, which is then concatenated with visual features before LLaVA processing.
 
-3. **Audio Generation**
-   - Google Text-to-Speech (gTTS) creates effective benign masks
-   - Generic questions ("What color is this?") work without optimization
+2. **Qwen2-Audio-7B-Instruct**: Native multimodal model where raw audio waveforms are encoded directly into embeddings that preserve prosodic features.
 
-4. **Evaluation Framework**
-   - Keyword-based ASR calculation is fast and reliable
-   - Statistical validation via Wilcoxon signed-rank test
+### Evaluation Framework
 
-### Validated Findings
+The Harmonic-Dissonance Benchmark evaluates three attack vectors per prompt:
+- **Text-Only**: Baseline text attacks to establish safety alignment
+- **Visual-Only**: Same text rendered as images (1024×200px PNG, Arial 36pt)
+- **Omni-Modal**: Visual attacks combined with benign audio masks
 
-- ✅ Audio consistently amplifies visual attacks
-- ✅ Effect is architecture-independent (LLaVA and Qwen2-Audio)
-- ✅ No adversarial optimization needed
-- ✅ Black-box attack (API access only)
+Attack Success Rate (ASR) is computed using keyword-based classification. Responses are labeled as "Refusal" if they contain safety language, or "Compliance" if they provide instructional content. Statistical significance is tested using the Wilcoxon signed-rank test.
 
----
+### Results Summary
 
-## ⚠️ Known Issues & Limitations
+| Architecture | Text ASR | Visual ASR | Omni ASR | $\Delta_{\text{audio}}$ |
+|--------------|----------|------------|----------|-------------------------|
+| LLaVA + Whisper | 8.0% | 18.0% | 10.0% | -44.4% |
+| Qwen2-Audio | 2.0% | 0.0% | 0.0% | 0.0% |
 
-### What Didn't Work
-
-1. **Gemini Backend**
-   - Initially planned to use Gemini 2.5 Flash
-   - Removed due to API access issues and cost
-   - Pivoted to open-source models
-
-2. **Text-Only Experiments**
-   - Required workaround: LLaVA needs dummy images for text-only mode
-   - Fixed by using blank 1×1 pixel placeholder images
-
-3. **Memory Constraints**
-   - Full-precision models require 40GB+ VRAM
-   - Solution: 4-bit quantization via bitsandbytes
-
-### Current Limitations
-
-- **Dataset Size**: 50 prompts (sufficient for course paper, small for publication)
-- **Model Coverage**: Only tested LLaVA + Whisper and Qwen2-Audio
-- **Evaluation**: Keyword-based (simple but effective for proof-of-concept)
-- **Hardware**: Requires GPU (experiments took ~4 hours on RTX 3060)
+LLaVA demonstrates audio-first prioritization where benign audio reduces visual attack success. Qwen2-Audio maintains balanced weighting with consistent safety across modalities.
 
 ---
 
-## 🔮 Future Work
+## Limitations
 
-### Planned Improvements
-
-1. **Expand Model Coverage**
-   - Test GPT-4V, GPT-4o, Claude 3
-   - Evaluate Gemini Pro (if API access available)
-   - Try Flamingo and BLIP-2 architectures
-
-2. **Enhanced Evaluation**
-   - Use LLM-as-judge (GPT-4) for more nuanced scoring
-   - Implement human evaluation for gold standard
-   - Add adversarial robustness metrics
-
-3. **Dataset Expansion**
-   - Increase to 100-200 prompts
-   - Add multilingual prompts
-   - Test different audio types (music, ambient sounds)
-
-4. **Defense Mechanisms**
-   - Implement Joint-Modality Scrutiny layers
-   - Test entropy-based detection
-   - Develop adversarial training protocols
-
-5. **Mechanistic Interpretability**
-   - Visualize attention heads during attacks
-   - Identify safety neurons across modalities
-   - Trace activation pathways
+- **Dataset Size**: 50 prompts (sufficient for initial validation, may require expansion for publication)
+- **Model Coverage**: Limited to LLaVA + Whisper and Qwen2-Audio architectures
+- **Evaluation Method**: Keyword-based classification (effective but may benefit from LLM-as-judge)
+- **Hardware Requirements**: GPU recommended (experiments require ~4 hours on RTX 3060)
 
 ---
 
-## 📖 For Beginners
+## Future Work
 
-### Understanding the Code
+Potential extensions include:
+- Expanded model coverage (GPT-4V, Claude 3, Flamingo)
+- Enhanced evaluation using LLM-as-judge or human evaluation
+- Dataset expansion to 100-200 prompts with multilingual support
+- Defense mechanism development (Joint-Modality Scrutiny, entropy-based detection)
+- Mechanistic interpretability analysis (attention visualization, safety neuron identification)
 
-**Start here if you're new to multimodal AI security:**
 
-1. **Read the Paper First**: Open `modality-prioritization-attack-vector.tex` (or compile to PDF)
-2. **Explore the Dataset**: Check `data/dataset.csv` to see example prompts
-3. **Run Small Test**: Use the 3-prompt dataset first
-   ```bash
-   # Edit config.yaml: dataset_path: "data/dataset.csv"
-   python main.py --mode visual
-   ```
-4. **Check Results**: Look at `results/experiment_visual.csv`
-5. **View Artifacts**: See generated images in `results/artifacts/`
-
-### Key Concepts
-
-- **Modality**: Input type (text, image, audio)
-- **Jailbreaking**: Bypassing AI safety mechanisms
-- **ASR (Attack Success Rate)**: % of successful attacks
-- **Audio Multiplier Effect**: How much audio increases ASR
-- **Late-Fusion**: Processing modalities separately before combining
-
-### Troubleshooting
-
-**GPU Out of Memory?**
-```yaml
-use_4bit: true  # In config.yaml
-```
-
-**Slow Experiments?**
-```yaml
-dataset_path: "data/dataset.csv"  # Use small dataset first
-```
-
-**Import Errors?**
-```bash
-pip install -r requirements.txt --upgrade
-```
-
----
-
-## 📚 Citation
-
-If you use this work in your research, please cite:
-
-```bibtex
-@article{chen2025modality,
-  title={Quantifying Modality Prioritization as an Attack Vector in Multimodal Large Language Models},
-  author={Chen, William},
-  journal={arXiv preprint},
-  year={2025},
-  institution={Rensselaer Polytechnic Institute}
-}
-```
-
----
-
-## 🤝 Contributing
-
-Contributions welcome! Areas of interest:
-- Testing additional model architectures
-- Expanding the dataset
-- Implementing defense mechanisms
-- Improving evaluation metrics
-
----
-
-## ⚖️ Ethical Considerations
-
-This research is conducted for AI safety purposes only. All experiments:
-- Use synthetic adversarial prompts (no real harmful content)
-- Run on isolated systems
-- Findings shared with model developers before publication
-
-**Do not use these techniques maliciously.**
-
----
-
-## 📧 Contact
-
-**William Chen**  
-Rensselaer Polytechnic Institute  
-Email: chenw21@rpi.edu
-
----
-
-## 📜 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-**⭐ Star this repo if you find it useful for your research!**

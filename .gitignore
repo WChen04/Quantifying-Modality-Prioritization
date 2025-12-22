@@ -3,40 +3,80 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.egg-info/
+dist/
+build/
 
 # Virtual Environments
 venv/
 venv_hf/
+venv_mac/
 env/
 ENV/
 .venv/
 
-# Configuration
+# Configuration (keep template, ignore actual config with secrets)
 config.yaml
+config.yaml.backup
 .env
+.env.local
 
-# Results (artifacts can be regenerated)
-results/artifacts/*
-results/figures/*
+# Results - tracked in repository for reproducibility
+# Individual artifact files are ignored (use artifacts.zip instead)
+results/artifacts/*.png
+results/artifacts/*.mp3
+!results/artifacts.zip  # Tracked - compressed artifacts (100 files)
+results/figures/*       # Figures will be tracked
+results/*.csv           # Results CSVs will be tracked
+results_qwen2/artifacts/*.png
+results_qwen2/artifacts/*.mp3
+results_qwen2/*.csv
+results_llava/*.csv
 
 # OS
 .DS_Store
 Thumbs.db
+*.swp
+*.swo
+*~
 
-# LaTeX temporary files
+# LaTeX files (hide paper until publication)
+*.tex
 *.aux
 *.log
 *.out
 *.synctex.gz
 *.fdb_latexmk
 *.fls
+*.toc
+*.bbl
+*.blg
+*.fdb_latexmk
+*.pdf
 
-# Old/unused documentation (now deleted)
-*.md
-!README.md
-!LICENSE
+# Docker
+.docker/
+docker-compose.override.yml
 
-# Old paper versions (now deleted)
-*.ltx
-project_neurips.tex
-project_neurips_standalone.tex
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Model cache (Hugging Face)
+.cache/
+models/
+*.bin
+*.safetensors
+
+# Sensitive/Vulnerable files
+# - Research paper (.tex) - keep private until publication
+# - Config files with model settings
+# - Dataset files with adversarial prompts (uncomment if needed)
+# data/dataset*.csv
+

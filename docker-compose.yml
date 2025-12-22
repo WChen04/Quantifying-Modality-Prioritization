@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # GPU-enabled service (for NVIDIA GPUs)
+  gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: modality-prioritization:gpu
+    container_name: modality-prioritization-gpu
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CUDA_VISIBLE_DEVICES=0
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./data:/app/data:ro
+      - ./config.yaml:/app/config.yaml:ro
+      - ./results:/app/results
+      - model-cache:/root/.cache/huggingface
+    command: >
+      sh -c "
+        pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 &&
+        pip install --no-cache-dir bitsandbytes>=0.41.0 &&
+        python main.py --mode full
+      "
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # CPU/Mac service (for Mac with MPS or CPU-only)
+  cpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: modality-prioritization:cpu
+    container_name: modality-prioritization-cpu
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./data:/app/data:ro
+      - ./config.yaml:/app/config.yaml:ro
+      - ./results:/app/results
+      - model-cache:/root/.cache/huggingface
+    command: >
+      sh -c "
+        pip install --no-cache-dir torch torchvision torchaudio &&
+        python main.py --mode full
+      "
+    # For Mac with MPS, PyTorch will automatically detect it
+    # No special configuration needed
+
+volumes:
+  model-cache:
+    driver: local
+

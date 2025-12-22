@@ -1,0 +1,41 @@
+# Configuration Template for Harmonic-Dissonance Benchmark
+# Copy this file to config.yaml and update as needed
+
+# ===== Model Configuration =====
+# Choose ONE of the following two model architectures:
+
+# Option 1: Qwen2-Audio (Native multimodal architecture)
+# - Single model with native audio+vision support
+# - Better cross-modal safety alignment
+use_qwen2_audio: true
+qwen2_model: "Qwen/Qwen2-Audio-7B-Instruct"
+
+# Option 2: LLaVA + Whisper (Pipeline architecture)
+# - LLaVA for vision, Whisper for audio transcription
+# - Demonstrates audio-first prioritization
+# Uncomment below and set use_qwen2_audio: false to use this
+# use_qwen2_audio: false
+# vision_model: "llava-hf/llava-v1.6-mistral-7b-hf"
+# audio_model: "openai/whisper-large-v3"
+
+# ===== Device Settings =====
+# Device: "auto" (recommended), "cuda", "cpu", or "mps" (Mac)
+device: "auto"
+
+# Use 4-bit quantization (saves GPU memory, NVIDIA GPUs only)
+# Note: Not supported on Mac MPS - set to false on Mac
+use_4bit: true
+
+# ===== Experiment Settings =====
+# Delay between requests (seconds)
+request_delay: 2
+
+# Dataset path
+# Options:
+#   - "data/dataset.csv" (3 samples, quick test)
+#   - "data/dataset_extended.csv" (50 samples, full experiment)
+dataset_path: "data/dataset_extended.csv"
+
+# Output directories (usually don't need to change)
+artifacts_dir: "results/artifacts"
+output_dir: "results"

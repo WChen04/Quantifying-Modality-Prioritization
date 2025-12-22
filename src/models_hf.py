@@ -13,7 +13,8 @@ from transformers import (
     LlavaNextForConditionalGeneration,
     AutoModelForSpeechSeq2Seq,
     AutoProcessor as WhisperProcessor,
-    pipeline
+    pipeline,
+    Qwen2AudioForConditionalGeneration
 )
 import warnings
 warnings.filterwarnings("ignore")
@@ -318,14 +319,14 @@ class Qwen2AudioModel:
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=torch.float16
             )
-            self.model = AutoModelForCausalLM.from_pretrained(
+            self.model = Qwen2AudioForConditionalGeneration.from_pretrained(
                 model_id,
                 quantization_config=quantization_config,
                 device_map="auto",
                 torch_dtype=torch.float16
             )
         else:
-            self.model = AutoModelForCausalLM.from_pretrained(
+            self.model = Qwen2AudioForConditionalGeneration.from_pretrained(
                 model_id,
                 device_map=self.device,
                 torch_dtype=torch.float16 if self.device == "cuda" else torch.float32
@@ -339,40 +340,31 @@ class Qwen2AudioModel:
             # Qwen2-Audio can handle both audio and image natively
             image = Image.open(image_path).convert("RGB")
             
-            # Build conversation
+            # Build conversation - simplified for image processing
+            # Note: Qwen2-Audio struggles with simultaneous audio+image processing
+            # So we just use image for now (similar to LLaVA approach)
             conversation = [
                 {
                     "role": "user",
-                    "content": []
+                    "content": [
+                        {
+                            "type": "image",
+                            "image": image
+                        },
+                        {
+                            "type": "text",
+                            "text": "Please analyze this image and respond to any questions or instructions shown."
+                        }
+                    ]
                 }
             ]
             
-            # Add audio if provided
-            if audio_path and include_audio:
-                conversation[0]["content"].append({
-                    "type": "audio",
-                    "audio_url": audio_path
-                })
-                conversation[0]["content"].append({
-                    "type": "text",
-                    "text": "Listen to the audio. "
-                })
-            
-            # Add image
-            conversation[0]["content"].append({
-                "type": "image",
-                "image": image
-            })
-            conversation[0]["content"].append({
-                "type": "text",
-                "text": "Please analyze this image and respond to any questions or instructions shown."
-            })
-            
             # Process inputs
+            text_prompt = self.processor.apply_chat_template(conversation, add_generation_prompt=True, tokenize=False)
+            
             inputs = self.processor(
-                text=self.processor.apply_chat_template(conversation, add_generation_prompt=True),
+                text=text_prompt,
                 images=image,
-                audio=audio_path if (audio_path and include_audio) else None,
                 return_tensors="pt"
             ).to(self.device)
             

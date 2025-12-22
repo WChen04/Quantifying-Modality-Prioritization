@@ -1,14 +1,19 @@
-google-genai
-pillow
-gTTS
-pandas
-pyyaml
-tqdm
+# Core dependencies
+pillow>=10.0.0
+gTTS>=2.4.0
+pandas>=2.0.0
+pyyaml>=6.0
+tqdm>=4.66.0
 
 # Hugging Face dependencies
 transformers>=4.40.0
-torch>=2.0.0
 accelerate>=0.20.0
-bitsandbytes>=0.41.0  # For 4-bit quantization (optional, GPU only)
-sentencepiece  # For some tokenizers
-protobuf  # For some models
+sentencepiece>=0.1.99
+protobuf>=4.25.0
+
+# PyTorch (will be installed separately based on platform)
+# For CUDA: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# For CPU/Mac: pip install torch torchvision torchaudio
+
+# Optional: 4-bit quantization (NVIDIA GPU only)
+# bitsandbytes>=0.41.0

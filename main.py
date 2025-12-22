@@ -8,23 +8,9 @@ from src.judge import SafetyJudge
 
 
 def load_config():
-    """Load config and resolve environment variables."""
+    """Load configuration file."""
     with open("config.yaml", "r") as f:
         config = yaml.safe_load(f)
-    
-    # Check backend type
-    backend = config.get("backend", "gemini")
-    
-    if backend == "gemini":
-        # Resolve API key from environment variable for Gemini
-        api_key = os.environ.get("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError(
-                "GEMINI_API_KEY environment variable not set.\n"
-                "Run: export GEMINI_API_KEY='your-gemini-api-key-here'"
-            )
-        config["gemini_api_key"] = api_key
-    
     return config
 
 
@@ -37,45 +23,34 @@ def run_experiment(mode: str = "omni"):
     """
     config = load_config()
     request_delay = config.get("request_delay", 5)
-    backend = config.get("backend", "gemini")
     
     # Initialize components
     artifacts_dir = config.get("artifacts_dir", "results/artifacts")
     generator = ArtifactGenerator(output_dir=artifacts_dir)
     judge = SafetyJudge()  # Keyword-based, no API needed
     
-    # Initialize target model based on backend
-    if backend == "huggingface":
-        # Import Hugging Face models
-        if config.get("use_qwen2_audio", False):
-            from src.models_hf import Qwen2AudioModel
-            print(f"[*] Using Qwen2-Audio model: {config.get('qwen2_model')}")
-            target_model = Qwen2AudioModel(
-                model_id=config.get("qwen2_model", "Qwen/Qwen2-Audio-7B-Instruct"),
-                device=config.get("device", "auto"),
-                use_4bit=config.get("use_4bit", True)
-            )
-            model_name = config.get("qwen2_model", "Qwen/Qwen2-Audio-7B-Instruct")
-        else:
-            from src.models_hf import HuggingFaceMultimodalModel
-            print(f"[*] Using Hugging Face models:")
-            print(f"    Vision: {config.get('vision_model')}")
-            print(f"    Audio: {config.get('audio_model')}")
-            target_model = HuggingFaceMultimodalModel(
-                vision_model=config.get("vision_model", "llava-hf/llava-v1.6-mistral-7b-hf"),
-                audio_model=config.get("audio_model", "openai/whisper-large-v3"),
-                device=config.get("device", "auto"),
-                use_4bit=config.get("use_4bit", True)
-            )
-            model_name = f"{config.get('vision_model')} + {config.get('audio_model')}"
-    else:  # gemini
-        from src.models import TargetModel
-        print(f"[*] Using Gemini model: {config.get('model_target')}")
-        target_model = TargetModel(
-            api_key=config["gemini_api_key"], 
-            model=config.get("model_target", "gemini-2.0-flash")
+    # Initialize target model - choose between Qwen2-Audio or LLaVA + Whisper
+    if config.get("use_qwen2_audio", False):
+        from src.models_hf import Qwen2AudioModel
+        print(f"[*] Using Qwen2-Audio model: {config.get('qwen2_model')}")
+        target_model = Qwen2AudioModel(
+            model_id=config.get("qwen2_model", "Qwen/Qwen2-Audio-7B-Instruct"),
+            device=config.get("device", "auto"),
+            use_4bit=config.get("use_4bit", True)
         )
-        model_name = config.get("model_target", "gemini-2.0-flash")
+        model_name = config.get("qwen2_model", "Qwen/Qwen2-Audio-7B-Instruct")
+    else:
+        from src.models_hf import HuggingFaceMultimodalModel
+        print(f"[*] Using LLaVA + Whisper pipeline:")
+        print(f"    Vision: {config.get('vision_model')}")
+        print(f"    Audio: {config.get('audio_model')}")
+        target_model = HuggingFaceMultimodalModel(
+            vision_model=config.get("vision_model", "llava-hf/llava-v1.6-mistral-7b-hf"),
+            audio_model=config.get("audio_model", "openai/whisper-large-v3"),
+            device=config.get("device", "auto"),
+            use_4bit=config.get("use_4bit", True)
+        )
+        model_name = f"{config.get('vision_model')} + {config.get('audio_model')}"
     
     # Load dataset from CSV
     dataset_path = config.get("dataset_path", "data/dataset.csv")
@@ -85,7 +60,6 @@ def run_experiment(mode: str = "omni"):
     results = []
     
     print(f"\n[*] Starting Harmonic-Dissonance Benchmark (mode: {mode})...")
-    print(f"[*] Backend: {backend}")
     print(f"[*] Model: {model_name}")
     print(f"[*] Evaluation: Keyword-based heuristic (Refusal/Compliance)")
     print()

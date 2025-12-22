@@ -71,7 +71,7 @@ def main():
         asrs[mode] = calculate_asr(df)
     
     # Overall Attack Success Rates
-    print("\n📊 OVERALL ATTACK SUCCESS RATES (ASR)")
+    print("\nOVERALL ATTACK SUCCESS RATES (ASR)")
     print_separator("-")
     
     for mode in modes:
@@ -92,7 +92,7 @@ def main():
     # Audio Multiplier Effect
     print("\n")
     print_separator()
-    print("🎵 AUDIO MULTIPLIER EFFECT ANALYSIS")
+    print("AUDIO MULTIPLIER EFFECT ANALYSIS")
     print_separator()
     
     if results['visual'] is not None and results['omni'] is not None:
@@ -109,21 +109,21 @@ def main():
             print(f"Absolute Gain:    +{diff:.1f} percentage points")
             
             if multiplier > 1.2:
-                print("\n✅ STRONG EFFECT: Audio significantly amplifies attacks!")
+                print("\nSTRONG EFFECT: Audio significantly amplifies attacks!")
             elif multiplier > 1.0:
-                print("\n⚠️  MODERATE EFFECT: Audio provides some amplification")
+                print("\nMODERATE EFFECT: Audio provides some amplification")
             elif multiplier == 1.0:
-                print("\n➖ NO EFFECT: Audio doesn't change attack success")
+                print("\nNO EFFECT: Audio doesn't change attack success")
             else:
-                print("\n❌ NEGATIVE EFFECT: Audio actually reduces attack success")
+                print("\nNEGATIVE EFFECT: Audio actually reduces attack success")
         else:
             if omni_asr > 0:
-                print("\n⚠️  Visual baseline is 0%, but omni has success!")
+                print("\nWARNING: Visual baseline is 0%, but omni has success!")
                 print(f"   This suggests audio enables attacks that visuals alone cannot.")
             else:
-                print("\n➖ Both modes failed - model has strong safety guardrails")
+                print("\nBoth modes failed - model has strong safety guardrails")
     else:
-        print("\n⚠️  Run both visual and omni modes to calculate multiplier effect")
+        print("\nWARNING: Run both visual and omni modes to calculate multiplier effect")
     
     # Category Breakdown
     print("\n")
@@ -204,7 +204,7 @@ def main():
     
     print("\n")
     print_separator()
-    print("Analysis complete! 📊")
+    print("Analysis complete!")
     print_separator()
 
 

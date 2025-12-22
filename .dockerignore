@@ -1,0 +1,74 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Virtual environments
+venv/
+venv_hf/
+venv_mac/
+env/
+ENV/
+.venv/
+
+# Configuration (will be mounted or created)
+config.yaml
+config.yaml.backup
+.env
+.env.local
+
+# Results (will be mounted as volume)
+results/
+results_llava/
+results_qwen2/
+
+# Documentation (not needed in container)
+*.md
+!README.md
+LICENSE
+
+# LaTeX files (not needed in container)
+*.tex
+*.aux
+*.log
+*.out
+*.pdf
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Model cache (will be downloaded at runtime)
+.cache/
+models/
+*.bin
+*.safetensors
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
